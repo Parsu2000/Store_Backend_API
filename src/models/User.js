@@ -27,8 +27,11 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user'
     }
+}, {
+    timestamps: true // Automatically adds createdAt and updatedAt fields
+});
 
-    userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
 
     try {
@@ -38,9 +41,6 @@ const userSchema = new mongoose.Schema({
     } catch (error) {
         next(error);
     }
-});
-}, {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
 // Create and export the User Model
