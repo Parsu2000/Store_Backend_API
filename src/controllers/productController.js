@@ -76,8 +76,49 @@ const getProductById = async (req, res) => {
     }
 };
 
+// @desc    Update product by ID
+// @route   PUT /api/products/:id
+// @access  Public
+const updateProduct = async (req, res) => {
+    try {
+        const { name, description, price, category, stock } = req.body;
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (description) updateData.description = description;
+        if (price !== undefined) updateData.price = price;
+        if (category) updateData.category = category;
+        if (stock !== undefined) updateData.stock = stock;
+
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            data: updatedProduct
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createProduct,
     getProducts,
-    getProductById
+    getProductById,
+    updateProduct
 };
