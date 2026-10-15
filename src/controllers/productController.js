@@ -7,6 +7,22 @@ const createProduct = async (req, res) => {
     try {
         const { name, description, price, category, stock } = req.body;
 
+        // Basic validation for missing fields
+        if (!name || !description || price === undefined || !category || stock === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, description, price, category, and stock are required"
+            });
+        }
+
+        // Basic validation for invalid price or stock
+        if (typeof price !== 'number' || price < 0 || typeof stock !== 'number' || stock < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Price and stock must be valid non-negative numbers"
+            });
+        }
+
         const product = new Product({
             name,
             description,
@@ -23,8 +39,9 @@ const createProduct = async (req, res) => {
             data: savedProduct
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             success: false,
+            message: "Internal Server Error",
             error: error.message
         });
     }
@@ -45,6 +62,7 @@ const getProducts = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
+            message: "Internal Server Error",
             error: error.message
         });
     }
@@ -69,9 +87,11 @@ const getProductById = async (req, res) => {
             data: product
         });
     } catch (error) {
-        res.status(400).json({
+        // Handle invalid MongoDB ObjectId format or database errors
+        res.status(500).json({
             success: false,
-            message: "Invalid Product ID format"
+            message: "Internal Server Error",
+            error: error.message
         });
     }
 };
@@ -82,6 +102,15 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { name, description, price, category, stock } = req.body;
+
+        // Basic validation for invalid price or stock if provided in request
+        if ((price !== undefined && (typeof price !== 'number' || price < 0)) ||
+            (stock !== undefined && (typeof stock !== 'number' || stock < 0))) {
+            return res.status(400).json({
+                success: false,
+                message: "Price and stock must be valid non-negative numbers"
+            });
+        }
 
         const updateData = {};
         if (name) updateData.name = name;
@@ -109,8 +138,9 @@ const updateProduct = async (req, res) => {
             data: updatedProduct
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             success: false,
+            message: "Internal Server Error",
             error: error.message
         });
     }
@@ -135,8 +165,9 @@ const deleteProduct = async (req, res) => {
             message: "Product deleted successfully"
         });
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             success: false,
+            message: "Internal Server Error",
             error: error.message
         });
     }
