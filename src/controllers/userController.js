@@ -142,9 +142,53 @@ const getUserById = async (req, res) => {
     }
 };
 
+// @desc    Update user by ID
+// @route   PUT /api/users/:id
+// @access  Public (or Protected later)
+const updateUser = async (req, res) => {
+    try {
+        const { name, email, age, role } = req.body;
+
+        // Build an update object with allowed fields
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (email) updateData.email = email;
+        if (age !== undefined) updateData.age = age;
+        if (role) updateData.role = role;
+
+        // Find and update the user
+        // { new: true } returns the updated document rather than the original
+        // { runValidators: true } ensures schema validations apply during update
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            data: updatedUser
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createUser,
     loginUser,
     getUsers,
-    getUserById
+    getUserById,
+    updateUser
 };
