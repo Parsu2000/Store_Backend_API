@@ -2,7 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
-const productRoutes = require('./routes/productRoutes'); // Import product routes
+const productRoutes = require('./routes/productRoutes');
+const authRoutes = require('./routes/authRoutes'); // Import auth routes
 
 dotenv.config();
 connectDB();
@@ -14,7 +15,8 @@ app.use(express.json());
 
 // Mount Routes
 app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes); // Register product routes
+app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes); // Register auth routes under /api/auth
 
 app.get('/api/status', (req, res) => {
     res.status(200).json({
