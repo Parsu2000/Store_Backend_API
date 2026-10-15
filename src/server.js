@@ -2,23 +2,20 @@ const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes'); // Import product routes
 
-// Load environment variables
 dotenv.config();
-
-// Connect to MongoDB
 connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Add JSON middleware
 app.use(express.json());
 
-// Mount User Routes
+// Mount Routes
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes); // Register product routes
 
-// Test API endpoint
 app.get('/api/status', (req, res) => {
     res.status(200).json({
         status: "OK",
@@ -26,7 +23,6 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
