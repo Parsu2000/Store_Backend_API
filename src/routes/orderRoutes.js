@@ -8,10 +8,8 @@ const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Flow: JWT -> protect (Identify user) -> createOrder -> Order Model -> MongoDB
+// Any logged-in user (including anudeep) can create and view their orders
 router.post('/', protect, createOrder);
-
-// View orders (Protected)
 router.get('/', protect, getOrders);
 router.get('/:id', protect, getOrderById);
 

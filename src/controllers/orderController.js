@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 
 // @desc    Create a new order
 // @route   POST /api/orders
-// @access  Private (Authenticated User / Manager / Admin)
+// @access  Private (Any authenticated user)
 const createOrder = async (req, res) => {
     try {
         const { products, totalAmount, status } = req.body;
@@ -16,7 +16,7 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // 2. Calculate totalAmount from DB if not explicitly sent in req.body
+        // 2. Calculate totalAmount from DB if not explicitly provided
         let calculatedTotal = totalAmount;
         if (calculatedTotal === undefined) {
             calculatedTotal = 0;
@@ -56,23 +56,26 @@ const createOrder = async (req, res) => {
     }
 };
 
-// @desc    Get logged-in user's orders (or all orders for manager/admin)
+// @desc    Get orders (Manager/Admin -> All orders | User/Others -> Own orders)
 // @route   GET /api/orders
-// @access  Private
+// @access  Private (Any authenticated user)
 const getOrders = async (req, res) => {
     try {
-        let query = {};
-        // Regular users only see their own orders; managers & admins see all orders
-        if (req.user.role === 'user') {
-            query = { user: req.user._id };
+        let filter = {};
+
+        // Manager and Admin can view all orders; regular users (including 'user' or 'Team_lead') only view their own orders
+        if (req.user.role !== 'manager' && req.user.role !== 'admin') {
+            filter = { user: req.user._id };
         }
 
-        const orders = await Order.find(query)
+        const orders = await Order.find(filter)
             .populate('user', 'name email role')
-            .populate('products.product', 'name price category');
+            .populate('products.product', 'name price category')
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
+            role: req.user.role,
             count: orders.length,
             data: orders
         });
@@ -87,7 +90,7 @@ const getOrders = async (req, res) => {
 
 // @desc    Get single order by ID
 // @route   GET /api/orders/:id
-// @access  Private
+// @access  Private (Manager/Admin -> Any order | User/Others -> Own order)
 const getOrderById = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
@@ -101,8 +104,12 @@ const getOrderById = async (req, res) => {
             });
         }
 
-        // Ensure a normal 'user' can only view their own order
-        if (req.user.role === 'user' && order.user._id.toString() !== req.user._id.toString()) {
+        // Ensure regular users can only view their own order
+        if (
+            req.user.role !== 'manager' &&
+            req.user.role !== 'admin' &&
+            order.user._id.toString() !== req.user._id.toString()
+        ) {
             return res.status(403).json({
                 success: false,
                 message: "Forbidden: You can only view your own orders"
