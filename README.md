@@ -86,23 +86,34 @@ GET /api/orders/:id — Get single order details with ownership & ID validation
 
 ⚙️ Getting Started & Installation
 1.  Clone the repository:
+
 Bash
+
 git clone [https://github.com/Parasuram4800/store-backend-API.git](https://github.com/Parasuram4800/store-backend-API.git)
+
 cd store-backend-API
 
+
 2.  Install dependencies:
+
 Bash
+
 npm install
 
-3.  Configure Environment Variables:
+
+4.  Configure Environment Variables:
+
 Create a .env file in the root directory:
 
 Code snippet
+
 PORT=3000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_super_secret_jwt_key
 
 
 4.  Run the Server:
+
 Bash
+
 npm run dev
