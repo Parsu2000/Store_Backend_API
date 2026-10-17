@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
@@ -8,7 +9,6 @@ const createOrder = async (req, res) => {
     try {
         const { products, totalAmount, status } = req.body;
 
-        // 1. Validate that products array exists and is not empty
         if (!products || !Array.isArray(products) || products.length === 0) {
             return res.status(400).json({
                 success: false,
@@ -16,7 +16,6 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // 2. Calculate totalAmount from DB if not explicitly provided
         let calculatedTotal = totalAmount;
         if (calculatedTotal === undefined) {
             calculatedTotal = 0;
@@ -32,7 +31,6 @@ const createOrder = async (req, res) => {
             }
         }
 
-        // 3. Create order associated with the logged-in user (req.user._id)
         const order = new Order({
             user: req.user._id,
             products,
@@ -63,7 +61,6 @@ const getOrders = async (req, res) => {
     try {
         let filter = {};
 
-        // Manager and Admin can view all orders; regular users (including 'user' or 'Team_lead') only view their own orders
         if (req.user.role !== 'manager' && req.user.role !== 'admin') {
             filter = { user: req.user._id };
         }
@@ -93,10 +90,19 @@ const getOrders = async (req, res) => {
 // @access  Private (Manager/Admin -> Any order | User/Others -> Own order)
 const getOrderById = async (req, res) => {
     try {
+        // 1. Validate if ID is a valid MongoDB ObjectId -> Return 400 if invalid
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID format"
+            });
+        }
+
         const order = await Order.findById(req.params.id)
             .populate('user', 'name email role')
             .populate('products.product', 'name price category');
 
+        // 2. Order not found -> Return 404
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -104,7 +110,7 @@ const getOrderById = async (req, res) => {
             });
         }
 
-        // Ensure regular users can only view their own order
+        // 3. Ensure regular users can only view their own order
         if (
             req.user.role !== 'manager' &&
             req.user.role !== 'admin' &&
@@ -116,6 +122,7 @@ const getOrderById = async (req, res) => {
             });
         }
 
+        // 4. Valid order -> Return 200
         res.status(200).json({
             success: true,
             data: order
