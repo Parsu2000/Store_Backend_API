@@ -1,30 +1,41 @@
+require('dotenv').config();
 const express = require('express');
-const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+
+// Import Routes
+const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
-const authRoutes = require('./routes/authRoutes'); // Import auth routes
+const orderRoutes = require('./routes/orderRoutes');
 
-dotenv.config();
-connectDB();
-
+// Initialize Express App
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+// Middleware to parse JSON request bodies
 app.use(express.json());
 
-// Mount Routes
+// Mount API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/auth', authRoutes); // Register auth routes under /api/auth
+app.use('/api/orders', orderRoutes);
 
-app.get('/api/status', (req, res) => {
+// Root Health Check Route
+app.get('/', (req, res) => {
     res.status(200).json({
-        status: "OK",
-        message: "Store API is running"
+        success: true,
+        message: "Store Backend API is running",
+        allowedAtlasIPs: ["0.0.0.0/0"]
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Define Port and Host IP
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Listen on all network interfaces (localhost / 127.0.0.1 / LAN IP)
+
+// Connect to MongoDB first, then start the Express server
+connectDB().then(() => {
+    app.listen(PORT, HOST, () => {
+        console.log(`Server is running on http://localhost:${PORT} (Bound to IP: ${HOST})`);
+    });
 });
