@@ -1,7 +1,6 @@
 // @desc    Authorize roles (RBAC Middleware)
 const authorizeRoles = (...allowedRoles) => {
     return (req, res, next) => {
-        // Ensure req.user exists and their role is in the allowedRoles list
         if (!req.user || !allowedRoles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
@@ -9,7 +8,6 @@ const authorizeRoles = (...allowedRoles) => {
             });
         }
 
-        // User has the required role -> proceed to controller
         next();
     };
 };

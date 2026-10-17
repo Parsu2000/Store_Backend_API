@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['user', 'admin'], // Strictly allow only 'user' or 'admin'
+            enum: ['user', 'manager', 'admin'], // Added 'manager'
             default: 'user'
         }
     },

@@ -11,7 +11,7 @@ const generateToken = (userId, role) => {
     );
 };
 
-// @desc    Register a new user
+// @desc    Register a new user (user, manager, or admin)
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
@@ -36,12 +36,15 @@ const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        const allowedRoles = ['user', 'manager', 'admin'];
+        const assignedRole = allowedRoles.includes(role) ? role : 'user';
+
         const user = new User({
             name,
             email,
             password: hashedPassword,
             age,
-            role: role === 'admin' ? 'admin' : 'user'
+            role: assignedRole
         });
 
         const savedUser = await user.save();

@@ -11,15 +11,15 @@ const { authorizeRoles } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-// Public routes
+// Public / User / Manager / Admin: View products
 router.get('/', getProducts);
 router.get('/:id', getProductById);
 
-// Protected routes (Authenticated users)
-router.post('/', protect, createProduct);
-router.put('/:id', protect, updateProduct);
+// Manager & Admin: Create and Update products
+router.post('/', protect, authorizeRoles('manager', 'admin'), createProduct);
+router.put('/:id', protect, authorizeRoles('manager', 'admin'), updateProduct);
 
-// Admin-only route: Request -> protect (401 check) -> authorizeRoles('admin') (403 check) -> deleteProduct
+// Admin only: Delete products
 router.delete('/:id', protect, authorizeRoles('admin'), deleteProduct);
 
 module.exports = router;

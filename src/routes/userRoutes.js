@@ -8,17 +8,18 @@ const {
     deleteUser 
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const { authorizeRoles } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-// Public routes (handled via /api/auth, or kept here if needed)
+// Public routes
 router.post('/', createUser);
 router.post('/login', loginUser);
 
-// Protected routes (Require valid Bearer token)
-router.get('/', protect, getUsers);
-router.get('/:id', protect, getUserById);
-router.put('/:id', protect, updateUser);
-router.delete('/:id', protect, deleteUser);
+// Admin only: Manage users
+router.get('/', protect, authorizeRoles('admin'), getUsers);
+router.get('/:id', protect, authorizeRoles('admin'), getUserById);
+router.put('/:id', protect, authorizeRoles('admin'), updateUser);
+router.delete('/:id', protect, authorizeRoles('admin'), deleteUser);
 
 module.exports = router;

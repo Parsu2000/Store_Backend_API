@@ -2,46 +2,44 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const protect = async (req, res, next) => {
-    let token;
+    const authHeader = req.headers.authorization;
 
-    if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith('Bearer')
-    ) {
-        try {
-            // Extract token and strip any accidental quotes or extra spaces
-            token = req.headers.authorization.split(' ')[1].replace(/"/g, '').trim();
-
-            // Verify token using the exact same fallback secret as authController
-            const decoded = jwt.verify(
-                token,
-                process.env.JWT_SECRET || 'fallback_secret_key'
-            );
-
-            req.user = await User.findById(decoded.id).select('-password');
-
-            if (!req.user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Not authorized, user not found in database"
-                });
-            }
-
-            return next();
-        } catch (error) {
-            console.error("JWT Verification Error:", error.message);
-            return res.status(401).json({
-                success: false,
-                message: "Not authorized, invalid or expired token",
-                reason: error.message // Shows the exact reason right in Postman!
-            });
-        }
+    if (!authHeader || !authHeader.startsWith('Bearer')) {
+        return res.status(401).json({
+            success: false,
+            message: "Not authorized, no token provided"
+        });
     }
 
-    return res.status(401).json({
-        success: false,
-        message: "Not authorized, no token provided"
-    });
+    try {
+        const token = authHeader
+            .replace(/^Bearer\s+/i, '')
+            .replace(/^Bearer\s+/i, '')
+            .replace(/["']/g, '')
+            .trim();
+
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET || 'fallback_secret_key'
+        );
+
+        req.user = await User.findById(decoded.id).select('-password');
+
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Not authorized, user not found"
+            });
+        }
+
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Not authorized, invalid or expired token",
+            reason: error.message
+        });
+    }
 };
 
 module.exports = { protect };
