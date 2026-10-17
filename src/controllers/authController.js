@@ -16,7 +16,7 @@ const generateToken = (userId, role) => {
 // @access  Public
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, age } = req.body;
+        const { name, email, password, age, role } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -41,7 +41,7 @@ const registerUser = async (req, res) => {
             email,
             password: hashedPassword,
             age,
-            role: 'user'
+            role: role === 'admin' ? 'admin' : 'user'
         });
 
         const savedUser = await user.save();
@@ -73,7 +73,6 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validation for missing email or password
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -81,7 +80,6 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // 1. Find user by email
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({
@@ -90,7 +88,6 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // 2. Compare password using bcrypt.compare()
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({
@@ -99,10 +96,8 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // 3. Password is correct -> Generate JWT Token
         const token = generateToken(user._id, user.role);
 
-        // Prepare user response object without password
         const userResponse = user.toObject();
         delete userResponse.password;
 

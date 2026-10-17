@@ -4,48 +4,44 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
     let token;
 
-    // 1. Read the Authorization header & check if it starts with 'Bearer'
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer')
     ) {
         try {
-            // 2. Extract the Bearer token (Format: "Bearer <token>")
-            token = req.headers.authorization.split(' ')[1];
+            // Extract token and strip any accidental quotes or extra spaces
+            token = req.headers.authorization.split(' ')[1].replace(/"/g, '').trim();
 
-            // 3. Verify the JWT
+            // Verify token using the exact same fallback secret as authController
             const decoded = jwt.verify(
                 token,
                 process.env.JWT_SECRET || 'fallback_secret_key'
             );
 
-            // 4 & 5. Identify the user and attach user information to req (excluding password)
             req.user = await User.findById(decoded.id).select('-password');
 
             if (!req.user) {
                 return res.status(401).json({
                     success: false,
-                    message: "Not authorized, user not found"
+                    message: "Not authorized, user not found in database"
                 });
             }
 
-            // 6. Call next() to pass control to the route controller
-            next();
+            return next();
         } catch (error) {
+            console.error("JWT Verification Error:", error.message);
             return res.status(401).json({
                 success: false,
-                message: "Not authorized, invalid or expired token"
+                message: "Not authorized, invalid or expired token",
+                reason: error.message // Shows the exact reason right in Postman!
             });
         }
     }
 
-    // If no token is found in the header
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: "Not authorized, no token provided"
-        });
-    }
+    return res.status(401).json({
+        success: false,
+        message: "Not authorized, no token provided"
+    });
 };
 
 module.exports = { protect };
